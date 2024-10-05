@@ -7,13 +7,14 @@ namespace IPSBuildsCopier
     /// </summary>
     public class BuildCopier
     {
-        // поле для хранения данных полученных из settings.xml
+        // Поле для хранения данных полученных из settings.xml
         private Settings _settings;
 
         public BuildCopier(Settings settings)
         {
             _settings = settings;
         }
+
         /// <summary>
         /// Асинхронно копируем все дистрибутивы из списка <BuildsList> в settings.xml
         /// </summary>
@@ -45,10 +46,10 @@ namespace IPSBuildsCopier
         /// <exception cref="IOException"></exception>
         private async Task CopyBuildDirectoryAsync(BuildInfo buildInfo, DirectoryInfo targetDir)
         {
-            // Получаем инфу о папке с дистрибутивом билда
+            // Получаем инфу о сетевой папке с дистрибутивом билда
             var sourceDir = buildInfo.NetworkPath;
 
-            // Проверяем валидность аргументов и доступность папки с дистрибутивом
+            // Проверяем аргументы на null и доступность папки с дистрибутивом
             ValidateArguments(sourceDir, targetDir);
 
             // Получаем номер сборки билда
@@ -57,11 +58,8 @@ namespace IPSBuildsCopier
             // Задаём путь к папке назначения (\<Дистрибутив>\<Номер билда>)
             var destinationDir = new DirectoryInfo(Path.Combine(targetDir.FullName, buildInfo.BuildName, currentBuildVersion));
 
-            // Пробуем создать целевую папку указанную в <TargetFolder> файла settings.xml на локальном диске
-            TryCreateLocalDir(targetDir);
-
-            // Пробуем создать подпапку с номером сборки в локальной папке назначения
-            TryCreateLocalDir(destinationDir);
+            // Создаём целевую папку с именем билда и подпапку с номером сборки на локальном диске
+            CreateTargetDirs(targetDir, destinationDir);
 
             // Проверяем актуальность локальной копии билда. Если копия актуальна, то ее не перезаписываем
             if (IsBuildCopyActual(currentBuildVersion, destinationDir))
@@ -70,66 +68,18 @@ namespace IPSBuildsCopier
                 return;
             }
 
+            // Начало блока копирования
+
             Console.WriteLine($"Копирую {buildInfo.BuildName}...");
+
             // Копируем содержимое директории
             await CopyDirectoryContentsAsync(sourceDir, destinationDir);
+
             // В файл version.txt записывае номер сборки  билда
             await File.WriteAllTextAsync(Path.Combine(destinationDir.FullName, "version.txt"), currentBuildVersion);
+
             Console.WriteLine("Копирование завершено.\n");
-        }
-
-        /// <summary>
-        /// Валидация аргументов
-        /// </summary>
-        /// <param name="sourceDir">Папка с дистрибутивом билда</param>
-        /// <param name="targetDir">Локальная папка для хранения копии билда</param>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="DirectoryNotFoundException"></exception>
-        private void ValidateArguments(DirectoryInfo sourceDir, DirectoryInfo targetDir)
-        {
-            // Проверяем аргументы на null
-            if (sourceDir == null)
-            {
-                throw new ArgumentNullException(nameof(sourceDir), "Исходная директория не может быть null.");
-            }
-
-            if (targetDir == null)
-            {
-                throw new ArgumentNullException(nameof(targetDir), "Целевая директория не может быть null.");
-            }
-
-            // Проверяем, существует ли исходная директория
-            if (!sourceDir.Exists)
-            {
-                throw new DirectoryNotFoundException($"Исходная директория не найдена: {sourceDir.FullName}");
-            }
-        }
-
-        /// <summary>
-        /// Пробуем создать папку на локальном диске
-        /// </summary>
-        /// <param name="targetDir">Имя локальной папки</param>
-        /// <exception cref="UnauthorizedAccessException"></exception>
-        /// <exception cref="IOException"></exception>
-        private void TryCreateLocalDir(DirectoryInfo targetDir)
-        {
-            // Проверяем, существует ли целевая директория
-            if (!targetDir.Exists)
-            {
-                try
-                {
-                    // Пытаемся создать целевую директорию
-                    targetDir.Create();
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    throw new UnauthorizedAccessException("Недостаточно прав для создания целевой директории.");
-                }
-                catch (IOException ex)
-                {
-                    throw new IOException("Ошибка ввода-вывода при создании целевой директории.", ex);
-                }
-            }
+            // Конец блока копирования
         }
 
         /// <summary>
@@ -200,7 +150,6 @@ namespace IPSBuildsCopier
             }
         }
 
-
         /// <summary>
         /// Получает номер сборки из файла с информацией о версии.
         /// </summary>
@@ -262,6 +211,74 @@ namespace IPSBuildsCopier
         }
 
         /// <summary>
+        /// Пробуем создать папку на локальном диске
+        /// </summary>
+        /// <param name="targetDir">Имя локальной папки</param>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        /// <exception cref="IOException"></exception>
+        private void TryCreateLocalDir(DirectoryInfo targetDir)
+        {
+            // Проверяем, существует ли целевая директория
+            if (!targetDir.Exists)
+            {
+                try
+                {
+                    // Пытаемся создать целевую директорию
+                    targetDir.Create();
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    throw new UnauthorizedAccessException("Недостаточно прав для создания целевой директории.");
+                }
+                catch (IOException ex)
+                {
+                    throw new IOException("Ошибка ввода-вывода при создании целевой директории.", ex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Создание локальной папки с именем билда и подпапки с номером сборки
+        /// </summary>
+        /// <param name="targetDir">Папка с имененм билда</param>
+        /// <param name="destinationDir">Подпапка с номером сборки</param>
+        private void CreateTargetDirs(DirectoryInfo targetDir, DirectoryInfo destinationDir)
+        {
+            // Пробуем создать целевую папку указанную в <TargetFolder> файла settings.xml на локальном диске
+            TryCreateLocalDir(targetDir);
+
+            // Пробуем создать подпапку с номером сборки в локальной папке назначения
+            TryCreateLocalDir(destinationDir);
+        }
+
+        /// <summary>
+        /// Валидация аргументов
+        /// </summary>
+        /// <param name="sourceDir">Папка с дистрибутивом билда</param>
+        /// <param name="targetDir">Локальная папка для хранения копии билда</param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        private void ValidateArguments(DirectoryInfo sourceDir, DirectoryInfo targetDir)
+        {
+            // Проверяем аргументы на null
+            if (sourceDir == null)
+            {
+                throw new ArgumentNullException(nameof(sourceDir), "Исходная директория не может быть null.");
+            }
+
+            if (targetDir == null)
+            {
+                throw new ArgumentNullException(nameof(targetDir), "Целевая директория не может быть null.");
+            }
+
+            // Проверяем, существует ли исходная директория
+            if (!sourceDir.Exists)
+            {
+                throw new DirectoryNotFoundException($"Исходная директория не найдена: {sourceDir.FullName}");
+            }
+        }
+
+        /// <summary>
         /// Асинхронно получает общее количество элементов (файлов и папок) в указанной директории.
         /// </summary>
         /// <param name="directory">Исходная директория для подсчета элементов.</param>
@@ -281,6 +298,5 @@ namespace IPSBuildsCopier
             // Возвращаем общее количество элементов
             return count;
         }
-
     }
 }
