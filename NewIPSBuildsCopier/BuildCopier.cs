@@ -5,13 +5,13 @@ namespace IPSBuildsCopier
     /// <summary>
     /// Класс копирования дистрибутивов
     /// </summary>
-    public static class BuildCopier
+    public class BuildCopier
     {
         /// <summary>
         /// Асинхронно копируем все дистрибутивы из списка <BuildsList> в settings.xml
         /// </summary>
         /// <param name="settings">Настройки копирования сборок.</param>
-        public static async Task CopyBuildsAsync(Settings settings)
+        public async Task CopyBuildsAsync(Settings settings)
         {
             foreach (var buildInfo in settings.BuildsList)
             {
@@ -36,10 +36,50 @@ namespace IPSBuildsCopier
         /// <exception cref="DirectoryNotFoundException"></exception>
         /// <exception cref="UnauthorizedAccessException"></exception>
         /// <exception cref="IOException"></exception>
-        private static async Task CopyBuildDirectoryAsync(BuildInfo buildInfo, DirectoryInfo targetDir)
+        private async Task CopyBuildDirectoryAsync(BuildInfo buildInfo, DirectoryInfo targetDir)
         {
+            // Получаем инфу о папке с дистрибутивом билда
             var sourceDir = buildInfo.NetworkPath;
 
+            // Проверяем валидность аргументов и доступность папки с дистрибутивом
+            ValidateArguments(sourceDir, targetDir);
+
+            // Получаем номер сборки билда
+            var currentBuildVersion = GetBuildNumber(buildInfo.BuildVersionInfoPath);
+
+            // Пробуем создать целевую папку указанную в <TargetFolder> файла settings.xml на локальном диске
+            TryCreateLocalDir(targetDir);
+
+            // Задаём путь к папке назначения (\<Дистрибутив>\<Номер билда>)
+            var destinationDir = new DirectoryInfo(Path.Combine(targetDir.FullName, buildInfo.BuildName, currentBuildVersion));
+
+            // Пробуем создать подпапку с номером сборки в локальной папке назначения
+            TryCreateLocalDir(destinationDir);
+
+            // Проверяем актуальность локальной копии билда. Если копия актуальна, то ее не перезаписываем
+            if (IsBuildCopyActual(currentBuildVersion, destinationDir))
+            {
+                Console.WriteLine($"Копия билда {buildInfo.BuildName} уже актуальна.");
+                return;
+            }
+
+            Console.WriteLine($"Копирую {buildInfo.BuildName}...");
+            // Копируем содержимое директории
+            await CopyDirectoryContentsAsync(sourceDir, destinationDir);
+            // В файл version.txt записывае номер сборки  билда
+            await File.WriteAllTextAsync(Path.Combine(destinationDir.FullName, "version.txt"), currentBuildVersion);
+            Console.WriteLine("Копирование завершено.\n");
+        }
+
+        /// <summary>
+        /// Валидация аргументов
+        /// </summary>
+        /// <param name="sourceDir">Папка с дистрибутивом билда</param>
+        /// <param name="targetDir">Локальная папка для хранения копии билда</param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="DirectoryNotFoundException"></exception>
+        private void ValidateArguments(DirectoryInfo sourceDir, DirectoryInfo targetDir)
+        {
             // Проверяем аргументы на null
             if (sourceDir == null)
             {
@@ -56,45 +96,6 @@ namespace IPSBuildsCopier
             {
                 throw new DirectoryNotFoundException($"Исходная директория не найдена: {sourceDir.FullName}");
             }
-
-            // Кэшируем подкаталоги исходной директории перед началом копирования
-            DirectoryInfo[] dirs = sourceDir.GetDirectories();
-
-            // Получаем номер сборки билда
-            var currentBuildVersion = GetBuildNumber(buildInfo.BuildVersionInfoPath);
-
-            // Пробуем создать целевую папку указанную в <TargetFolder> файла settings.xml на локальном диске
-            TryCreateLocalDir(targetDir);
-
-            // Задаём путь к папке назначения (\<Дистрибутив>\<Номер билда>)
-            var destinationDir = new DirectoryInfo(Path.Combine(targetDir.FullName, buildInfo.BuildName, currentBuildVersion));
-
-            // Если папка назначения еще не существует
-            if (!destinationDir.Exists)
-            {
-                // Создаём папку назначения
-                TryCreateLocalDir(destinationDir);
-            }
-            else
-            {
-                // Проверяем актуальность локальной копии билда 
-                var isBuildCopyActual = IsBuildCopyActual(currentBuildVersion, destinationDir);
-
-                // Если копия актуальна, то ее не перезаписываем
-                if (isBuildCopyActual)
-                {
-                    Console.WriteLine($"Копия билда {buildInfo.BuildName} уже актуальна.");
-                    return;
-                }
-            }
-
-            Console.WriteLine($"Копирую {buildInfo.BuildName}...");
-            // Копируем содержимое директории
-            await CopyDirectoryContentsAsync(sourceDir, destinationDir);
-
-            // В файл version.txt записывае номер сборки  билда
-            await File.WriteAllTextAsync(Path.Combine(destinationDir.FullName, "version.txt"), currentBuildVersion);
-            Console.WriteLine("Копирование завершено.\n");
         }
 
         /// <summary>
@@ -103,7 +104,7 @@ namespace IPSBuildsCopier
         /// <param name="targetDir">Имя локальной папки</param>
         /// <exception cref="UnauthorizedAccessException"></exception>
         /// <exception cref="IOException"></exception>
-        private static void TryCreateLocalDir(DirectoryInfo targetDir)
+        private void TryCreateLocalDir(DirectoryInfo targetDir)
         {
             // Проверяем, существует ли целевая директория
             if (!targetDir.Exists)
@@ -127,10 +128,10 @@ namespace IPSBuildsCopier
         /// <summary>
         /// Рекурсивно копируем содержание папки с дистрибутивом
         /// </summary>
-        /// <param name="sourceDir">Сетевая папка с билдом</param>
+        /// <param name="sourceDir">Сетевая папка с дистрибутивом билда</param>
         /// <param name="destinationDir">Локальная папка для хранения копии билда</param>
         /// <returns></returns>
-        private static async Task CopyDirectoryContentsAsync(DirectoryInfo sourceDir, DirectoryInfo destinationDir)
+        private async Task CopyDirectoryContentsAsync(DirectoryInfo sourceDir, DirectoryInfo destinationDir)
         {
             // Копируем файлы из исходной директории в целевую
             foreach (FileInfo file in sourceDir.GetFiles())
@@ -169,7 +170,7 @@ namespace IPSBuildsCopier
         /// </summary>
         /// <param name="file">Исходный файл.</param>
         /// <param name="destinationPath">Путь к целевому файлу.</param>
-        private static async Task CopyFileAsync(FileInfo file, string destinationPath)
+        private async Task CopyFileAsync(FileInfo file, string destinationPath)
         {
             try
             {
@@ -177,6 +178,7 @@ namespace IPSBuildsCopier
 
                 // Открываем исходный файл для чтения
                 using (FileStream sourceStream = file.OpenRead())
+
                 // Создаем поток для записи в целевой файл
                 using (FileStream destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true))
                 {
@@ -199,7 +201,7 @@ namespace IPSBuildsCopier
         /// <returns>Номер сборки.</returns>
         /// <exception cref="FileNotFoundException"></exception>
         /// <exception cref="ArgumentNullException"></exception>
-        private static string GetBuildNumber(FileInfo buildVersionInfoPath)
+        private string GetBuildNumber(FileInfo buildVersionInfoPath)
         {
             // Проверяем наличие файла у которого будем номер билда
             if (!buildVersionInfoPath.Exists)
@@ -211,6 +213,7 @@ namespace IPSBuildsCopier
 
             // Получаем полную инфу о сборке
             FileVersionInfo currentBuildVersionInfo = FileVersionInfo.GetVersionInfo(buildVersionInfoPath.FullName);
+
             // Получаем номер сборки (он может быть и null)
             string? currentBuildVersion = currentBuildVersionInfo.ProductVersion;
 
@@ -228,7 +231,7 @@ namespace IPSBuildsCopier
         /// <param name="currentBuildVersion">Текущая версия сборки.</param>
         /// <param name="destinationDir">Целевая директория.</param>
         /// <returns>True, если локальная копия актуальна, иначе False.</returns>
-        private static bool IsBuildCopyActual(string currentBuildVersion, DirectoryInfo destinationDir)
+        private bool IsBuildCopyActual(string currentBuildVersion, DirectoryInfo destinationDir)
         {
             // Задаём путь для создания файла "version.txt"
             var versionFile = new FileInfo(Path.Combine(destinationDir.FullName, "version.txt"));
@@ -256,7 +259,7 @@ namespace IPSBuildsCopier
         /// </summary>
         /// <param name="directory">Исходная директория для подсчета элементов.</param>
         /// <returns>Общее количество файлов и папок в директории и всех её поддиректориях.</returns>
-        private static async Task<int> GetTotalItemCountAsync(DirectoryInfo directory)
+        private async Task<int> GetTotalItemCountAsync(DirectoryInfo directory)
         {
             // Начальное количество элементов: количество файлов и папок в текущей директории
             int count = directory.GetFiles().Length + directory.GetDirectories().Length;
