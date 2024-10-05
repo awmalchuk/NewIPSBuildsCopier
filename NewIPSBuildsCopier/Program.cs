@@ -20,7 +20,8 @@
             // }
 
             var settings = SettingsLoader.LoadSettings();
-            await BuildCopier.CopyBuildsAsync(settings);
+            var buildCopier = new BuildCopier(settings);
+            await buildCopier.CopyBuildsAsync();
             Console.WriteLine("All done.");
 
             Console.ReadKey();

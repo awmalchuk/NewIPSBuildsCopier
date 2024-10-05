@@ -7,18 +7,25 @@ namespace IPSBuildsCopier
     /// </summary>
     public class BuildCopier
     {
+        // поле для хранения данных полученных из settings.xml
+        private Settings _settings;
+
+        public BuildCopier(Settings settings)
+        {
+            _settings = settings;
+        }
         /// <summary>
         /// Асинхронно копируем все дистрибутивы из списка <BuildsList> в settings.xml
         /// </summary>
         /// <param name="settings">Настройки копирования сборок.</param>
-        public async Task CopyBuildsAsync(Settings settings)
+        public async Task CopyBuildsAsync()
         {
-            foreach (var buildInfo in settings.BuildsList)
+            foreach (var buildInfo in _settings.BuildsList)
             {
                 try
                 {
                     // Пробуем копировать папку с дистрибутивом
-                    await CopyBuildDirectoryAsync(buildInfo, settings.TargetFolder);
+                    await CopyBuildDirectoryAsync(buildInfo, _settings.TargetFolder);
                 }
                 catch (Exception ex)
                 {
@@ -47,11 +54,11 @@ namespace IPSBuildsCopier
             // Получаем номер сборки билда
             var currentBuildVersion = GetBuildNumber(buildInfo.BuildVersionInfoPath);
 
-            // Пробуем создать целевую папку указанную в <TargetFolder> файла settings.xml на локальном диске
-            TryCreateLocalDir(targetDir);
-
             // Задаём путь к папке назначения (\<Дистрибутив>\<Номер билда>)
             var destinationDir = new DirectoryInfo(Path.Combine(targetDir.FullName, buildInfo.BuildName, currentBuildVersion));
+
+            // Пробуем создать целевую папку указанную в <TargetFolder> файла settings.xml на локальном диске
+            TryCreateLocalDir(targetDir);
 
             // Пробуем создать подпапку с номером сборки в локальной папке назначения
             TryCreateLocalDir(destinationDir);
@@ -59,7 +66,7 @@ namespace IPSBuildsCopier
             // Проверяем актуальность локальной копии билда. Если копия актуальна, то ее не перезаписываем
             if (IsBuildCopyActual(currentBuildVersion, destinationDir))
             {
-                Console.WriteLine($"Копия билда {buildInfo.BuildName} уже актуальна.");
+                Console.WriteLine($"Копия билда {buildInfo.BuildName} уже актуальна.\n");
                 return;
             }
 
