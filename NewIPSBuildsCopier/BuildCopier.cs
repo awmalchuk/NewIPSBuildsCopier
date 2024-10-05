@@ -90,6 +90,7 @@ namespace IPSBuildsCopier
         /// <returns></returns>
         private async Task CopyDirectoryContentsAsync(DirectoryInfo sourceDir, DirectoryInfo destinationDir)
         {
+            // Реализация асинхронного копирования (IPS9 - 1 м 30 сек)
             // Копируем файлы из исходной директории в целевую
             foreach (FileInfo file in sourceDir.GetFiles())
             {
@@ -108,6 +109,7 @@ namespace IPSBuildsCopier
                 await CopyDirectoryContentsAsync(subDir, newDestinationDir);
             }
 
+            // Реализация асинхронного параллельного копирования (IPS9 - 1 м 20 сек)
             //var files = sourceDir.GetFiles();
             //var directories = sourceDir.GetDirectories();
 
@@ -136,8 +138,9 @@ namespace IPSBuildsCopier
                 // Открываем исходный файл для чтения
                 using (FileStream sourceStream = file.OpenRead())
 
-                // Создаем поток для записи в целевой файл
-                using (FileStream destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true))
+                // Создаем поток для записи в целевой файл (размер буфера по умолчанию: 4КБ (4096).)
+                // TODO Поэксперементировать с потреблением памяти при значениях: 64 КБ (65536 байт), 128 КБ (131072 байт) и 256 КБ (262144 байт)
+                using (FileStream destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 81920, useAsync: true))
                 {
                     // Асинхронно копируем данные из исходного потока в целевой
                     await sourceStream.CopyToAsync(destinationStream);
