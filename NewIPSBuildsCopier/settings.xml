@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Settings>
+  <TaskStartTime>01:30:00</TaskStartTime> <!-- Время запуска задачи. Если время не указано, то задача запускается с интервалом в час -->
+  <BuildsList>
+    <BuildInfo>
+      <BuildName>IPSv7</BuildName>
+      <NetworkPath>\\xeon1\IPS_Builds\Im.Net.v7\IPS.Installer.Full\</NetworkPath>
+      <BuildVersionInfoPath>\\xeon1\IPS_Builds\Im.Net.v7\IPS.Installer.Full\InstServer\Server\Intermech.Interfaces.dll</BuildVersionInfoPath>
+    </BuildInfo>
+    <BuildInfo>
+      <BuildName>IPSv8</BuildName>
+      <NetworkPath>\\xeon1\IPS_Builds\Im.Net.v8\IPS.Installer.Full\</NetworkPath>
+      <BuildVersionInfoPath>\\xeon1\IPS_Builds\Im.Net.v8\IPS.Installer.Full\InstServer\Server\Intermech.Interfaces.dll</BuildVersionInfoPath>
+    </BuildInfo>
+    <BuildInfo>
+      <BuildName>IPSv9</BuildName>
+      <NetworkPath>\\xeon1\IPS_Builds\Im.Net.v9\IPS.Installer.Full\</NetworkPath>
+      <BuildVersionInfoPath>\\xeon1\IPS_Builds\Im.Net.v9\IPS.Installer.Full\InstServer\Server\Intermech.Interfaces.dll</BuildVersionInfoPath>
+    </BuildInfo>
+  </BuildsList>
+  <TargetFolder>d:\IPSBuilds\</TargetFolder>
+</Settings>
