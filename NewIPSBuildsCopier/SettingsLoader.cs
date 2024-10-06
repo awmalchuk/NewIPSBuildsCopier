@@ -40,12 +40,12 @@ namespace IPSBuildsCopier
             catch (FileNotFoundException ex)
             {
                 // Обрабатываем случай, когда файл настроек не найден
-                throw new InvalidOperationException($"Файл настроек не найден: {settingsFilePath}", ex);
+                throw new InvalidOperationException($"Файл настроек не найден: {settingsFilePath}.\n{ex.Message}");
             }
             catch (Exception ex)
             {
                 // Обрабатываем любые другие ошибки, возникшие при загрузке настроек
-                throw new InvalidOperationException("Ошибка при загрузке настроек", ex);
+                throw new InvalidOperationException($"Ошибка при загрузке настроек.\n{ex.Message}");
             }
         }
     }
