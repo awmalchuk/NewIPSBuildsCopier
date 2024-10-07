@@ -64,9 +64,6 @@ namespace IPSBuildsCopier
             // Задаём путь к папке назначения (\<Дистрибутив>\<Номер билда>)
             var destinationDir = new DirectoryInfo(Path.Combine(targetDir.FullName, buildName, currentBuildVersion));
 
-            // Создаём целевую папку с именем билда и подпапку с номером сборки на локальном диске
-            CreateTargetDirs(targetDir, destinationDir);
-
             // Проверяем актуальность локальной копии билда. Если копия актуальна, то ее не перезаписываем
             if (IsBuildCopyActual(currentBuildVersion, destinationDir))
             {
@@ -96,9 +93,14 @@ namespace IPSBuildsCopier
         /// <returns></returns>
         private async Task CopyDirectoryContentsAsync(DirectoryInfo sourceDir, DirectoryInfo destinationDir)
         {
-            #region Реализация асинхронного копирования (IPS9 - 1 м 30 сек)
+            #region Реализация асинхронного копирования (IPS9 - 1м 30 сек)
+            //// Создаем целевую директорию, если она не существует
+            //if (!destinationDir.Exists)
+            //{
+            //    TryCreateLocalDir(destinationDir);
+            //}
 
-            // Копируем файлы из исходной директории в целевую
+            //// Копируем файлы из исходной директории в целевую
             //foreach (FileInfo file in sourceDir.GetFiles())
             //{
             //    // Генерируем для файла новый путь в целевую директорию
@@ -115,13 +117,46 @@ namespace IPSBuildsCopier
             //    // Рекурсивно копируем содержимое поддиректории
             //    await CopyDirectoryContentsAsync(subDir, newDestinationDir);
             //}
-
             #endregion
 
-            #region Реализация асинхронного параллельного копирования (IPS9 - 1 м 20 сек)
+            #region Реализация асинхронного параллельного копирования v2 (IPS9 - 1м 15сек)
+            // Получаем все файлы в исходной директории и поддиректориях
+            //var files = sourceDir.GetFiles("*", SearchOption.AllDirectories);
+            //var tasks = new List<Task>();
+
+            //foreach (var file in files)
+            //{
+            //    // Определяем относительный путь файла
+            //    var relativePath = Path.GetRelativePath(sourceDir.FullName, file.FullName);
+            //    // Определяем путь к целевому файлу
+            //    var destinationPath = Path.Combine(destinationDir.FullName, relativePath);
+            //    var destinationFile = new FileInfo(destinationPath);
+
+            //    // Создаем целевую директорию, если она не существует
+            //    if (!destinationFile.Directory.Exists)
+            //    {
+            //        // destinationFile.Directory.Create();
+            //        TryCreateLocalDir(destinationFile.Directory);
+            //    }
+
+            //    // Добавляем задачу копирования файла в список задач
+            //    tasks.Add(CopyFileAsync(file, destinationPath));
+            //}
+
+            // Ожидаем завершения всех задач копирования файлов
+            //await Task.WhenAll(tasks);
+            #endregion
+
+            #region Реализация асинхронного параллельного копирования v3 LINQ (IPS9 - 1 м 20 сек)
             // Получаем все файлы и поддиректории в исходной сетевой директории с дистрибутивом
             var files = sourceDir.GetFiles();
             var directories = sourceDir.GetDirectories();
+
+            // Создаем целевую директорию, если она не существует
+            if (!destinationDir.Exists)
+            {
+                TryCreateLocalDir(destinationDir);
+            }
 
             // Копируем файлы параллельно
             await Task.WhenAll(files.Select(file => CopyFileAsync(file, Path.Combine(destinationDir.FullName, file.Name))));
@@ -132,8 +167,7 @@ namespace IPSBuildsCopier
                 var newDestinationDir = destinationDir.CreateSubdirectory(subDir.Name);
                 await CopyDirectoryContentsAsync(subDir, newDestinationDir);
             }));
-
-            #endregion
+            #endregion 
         }
 
         /// <summary>
@@ -146,10 +180,10 @@ namespace IPSBuildsCopier
             try
             {
                 // Открываем исходный файл для чтения
-                using (FileStream sourceStream = file.OpenRead())
+                using (var sourceStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 65536, useAsync: true))
                 {
                     // Создаем поток для записи в целевой файл
-                    // Размер буфера по умолчанию 4Кб (4096)
+                    // Размер буфера по умолчанию 4Кб (4096); 65536
                     using (FileStream destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 65536, useAsync: true))
                     {
                         // Устанавливаем длину целевого файла
@@ -159,6 +193,8 @@ namespace IPSBuildsCopier
                         await sourceStream.CopyToAsync(destinationStream);
                     }
                 }
+
+               //await Task.Run(()=> file.CopyTo(destinationPath, true));
             }
             catch (Exception ex)
             {
@@ -220,12 +256,7 @@ namespace IPSBuildsCopier
             string versionContent = File.ReadAllText(versionFile.FullName);
 
             // Проверяем актуальность локальной папки со дистрибутивом
-            if (versionContent == currentBuildVersion)
-            {
-                return true;
-            }
-            return false;
-
+            return versionContent == currentBuildVersion;
         }
 
         /// <summary>
@@ -253,20 +284,6 @@ namespace IPSBuildsCopier
                     throw new IOException($"Ошибка ввода-вывода при создании целевой директории.\n{ex.Message}");
                 }
             }
-        }
-
-        /// <summary>
-        /// Создание локальной папки с именем билда и подпапки с номером сборки
-        /// </summary>
-        /// <param name="targetDir">Папка с имененм билда</param>
-        /// <param name="destinationDir">Подпапка с номером сборки</param>
-        private void CreateTargetDirs(DirectoryInfo targetDir, DirectoryInfo destinationDir)
-        {
-            // Пробуем создать целевую папку указанную в <TargetFolder> файла settings.xml на локальном диске
-            TryCreateLocalDir(targetDir);
-
-            // Пробуем создать подпапку с номером сборки в локальной папке назначения
-            TryCreateLocalDir(destinationDir);
         }
 
         /// <summary>
