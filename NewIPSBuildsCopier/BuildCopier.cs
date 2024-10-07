@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.IO;
 
 namespace IPSBuildsCopier
 {
@@ -195,7 +196,7 @@ namespace IPSBuildsCopier
                     }
                 }
 
-               //await Task.Run(()=> file.CopyTo(destinationPath, true));
+                //await Task.Run(()=> file.CopyTo(destinationPath, true));
             }
             catch (Exception ex)
             {
@@ -234,6 +235,19 @@ namespace IPSBuildsCopier
                 throw new ArgumentNullException("Номер сборки не может быть null");
             }
             return currentBuildVersion;
+        }
+
+        /// <summary>
+        /// Получает время последнего изменения файла
+        /// </summary>
+        /// <param name="buildVersionInfoPath">Путь к файлу</param>
+        /// <returns></returns>
+        private string GetLastModifiedInfo(FileInfo buildVersionInfoPath)
+        {
+            // Получаем дату и время последнего изменения файла
+            DateTime lastModifiedTime = buildVersionInfoPath.LastWriteTime;
+            string formattedDate = lastModifiedTime.ToString("dd.MM.yyyy_HH.mm");
+            return formattedDate;
         }
 
         /// <summary>
