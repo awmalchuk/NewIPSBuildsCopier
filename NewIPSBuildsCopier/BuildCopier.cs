@@ -48,7 +48,6 @@ namespace IPSBuildsCopier
         {
             // Получаем имя дистрибутива
             var buildName = buildInfo.BuildName;
-
             // Получаем инфу о сетевой папке с дистрибутивом билда
             var sourceDir = buildInfo.NetworkPath;
 
@@ -60,7 +59,6 @@ namespace IPSBuildsCopier
 
             // Получаем номер сборки билда
             var currentBuildVersion = GetBuildNumber(buildInfo.BuildVersionInfoPath);
-
             // Задаём путь к папке назначения (\<Дистрибутив>\<Номер билда>)
             var destinationDir = new DirectoryInfo(Path.Combine(targetDir.FullName, buildName, currentBuildVersion));
 
@@ -71,16 +69,13 @@ namespace IPSBuildsCopier
                 return;
             }
 
+            //TODO Навести тут порядок
             // Начало блока копирования
-
             Console.WriteLine($"Копирую {buildInfo.BuildName}...");
-
             // Копируем содержимое директории
             await CopyDirectoryContentsAsync(sourceDir, destinationDir);
-
             // В файл version.txt записывае номер сборки  билда
             await File.WriteAllTextAsync(Path.Combine(destinationDir.FullName, "version.txt"), currentBuildVersion);
-
             Console.WriteLine("Копирование завершено.\n");
             // Конец блока копирования
         }
@@ -120,7 +115,7 @@ namespace IPSBuildsCopier
             #endregion
 
             #region Реализация асинхронного параллельного копирования v2 (IPS9 - 1м 15сек)
-            // Получаем все файлы в исходной директории и поддиректориях
+            //// Получаем все файлы в исходной директории и поддиректориях
             //var files = sourceDir.GetFiles("*", SearchOption.AllDirectories);
             //var tasks = new List<Task>();
 
@@ -132,42 +127,51 @@ namespace IPSBuildsCopier
             //    var destinationPath = Path.Combine(destinationDir.FullName, relativePath);
             //    var destinationFile = new FileInfo(destinationPath);
 
-            //    // Создаем целевую директорию, если она не существует
-            //    if (!destinationFile.Directory.Exists)
+            //    // Проверяем, что директория не null и создаем ее, если она не существует
+            //    var directory = destinationFile.Directory;
+            //    if (directory != null && !directory.Exists)
             //    {
-            //        // destinationFile.Directory.Create();
-            //        TryCreateLocalDir(destinationFile.Directory);
+            //        TryCreateLocalDir(directory);
             //    }
 
             //    // Добавляем задачу копирования файла в список задач
             //    tasks.Add(CopyFileAsync(file, destinationPath));
             //}
 
-            // Ожидаем завершения всех задач копирования файлов
+            //// Ожидаем завершения всех задач копирования файлов
             //await Task.WhenAll(tasks);
             #endregion
 
             #region Реализация асинхронного параллельного копирования v3 LINQ (IPS9 - 1 м 20 сек)
+
             // Получаем все файлы и поддиректории в исходной сетевой директории с дистрибутивом
-            var files = sourceDir.GetFiles();
-            var directories = sourceDir.GetDirectories();
+            var files = sourceDir.GetFiles(); // Получаем массив всех файлов в исходной директории
+            var directories = sourceDir.GetDirectories(); // Получаем массив всех поддиректорий в исходной директории
 
             // Создаем целевую директорию, если она не существует
-            if (!destinationDir.Exists)
+            if (!destinationDir.Exists) // Проверяем, существует ли целевая директория
             {
-                TryCreateLocalDir(destinationDir);
+                TryCreateLocalDir(destinationDir); // Если не существует, создаем ее
             }
 
             // Копируем файлы параллельно
-            await Task.WhenAll(files.Select(file => CopyFileAsync(file, Path.Combine(destinationDir.FullName, file.Name))));
+            await Task.WhenAll(files.Select(file =>
+                CopyFileAsync(file, Path.Combine(destinationDir.FullName, file.Name))));
+            // Для каждого файла в исходной директории создаем задачу копирования файла в целевую директорию
+            // Path.Combine(destinationDir.FullName, file.Name) формирует полный путь к файлу в целевой директории
+            // Task.WhenAll запускает все задачи копирования параллельно и ожидает их завершения
 
             // Копируем поддиректории параллельно
             await Task.WhenAll(directories.Select(async subDir =>
             {
-                var newDestinationDir = destinationDir.CreateSubdirectory(subDir.Name);
-                await CopyDirectoryContentsAsync(subDir, newDestinationDir);
+                var newDestinationDir = destinationDir.CreateSubdirectory(subDir.Name); // Создаем поддиректорию в целевой директории
+                await CopyDirectoryContentsAsync(subDir, newDestinationDir); // Рекурсивно копируем содержимое поддиректории
             }));
-            #endregion 
+            // Для каждой поддиректории в исходной директории создаем задачу копирования содержимого поддиректории в новую поддиректорию целевой директории
+            // Task.WhenAll запускает все задачи копирования параллельно и ожидает их завершения
+
+            #endregion
+
         }
 
         /// <summary>
@@ -184,7 +188,7 @@ namespace IPSBuildsCopier
                 {
                     // Создаем поток для записи в целевой файл
                     // Размер буфера по умолчанию 4Кб (4096); 65536
-                    using (FileStream destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 65536, useAsync: true))
+                    using (var destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 65536, useAsync: true))
                     {
                         // Устанавливаем длину целевого файла
                         destinationStream.SetLength(file.Length);
