@@ -64,7 +64,7 @@ namespace IPSBuildsCopier
             var destinationDir = new DirectoryInfo(Path.Combine(targetDir.FullName, buildName, currentBuildVersion));
 
             // Проверяем актуальность локальной копии билда. Если копия актуальна, то ее не перезаписываем
-            if (IsBuildCopyActual(currentBuildVersion, destinationDir))
+            if (await IsBuildCopyActualAsync(currentBuildVersion, destinationDir))
             {
                 Console.WriteLine($"Копия билда {buildInfo.BuildName} уже актуальна.\n");
                 return;
@@ -254,7 +254,7 @@ namespace IPSBuildsCopier
         /// <param name="currentBuildVersion">Текущая версия сборки.</param>
         /// <param name="destinationDir">Целевая директория.</param>
         /// <returns>True, если локальная копия актуальна, иначе False.</returns>
-        private bool IsBuildCopyActual(string currentBuildVersion, DirectoryInfo destinationDir)
+        private async Task<bool> IsBuildCopyActualAsync(string currentBuildVersion, DirectoryInfo destinationDir)
         {
             // Задаём путь для создания файла "version.txt"
             var versionFile = new FileInfo(Path.Combine(destinationDir.FullName, "version.txt"));
@@ -266,7 +266,7 @@ namespace IPSBuildsCopier
             }
 
             // Читаем из него записанные данные о номере сборки
-            string versionContent = File.ReadAllText(versionFile.FullName);
+            string versionContent = await File.ReadAllTextAsync(versionFile.FullName);
 
             // Проверяем актуальность локальной папки со дистрибутивом
             return versionContent == currentBuildVersion;
