@@ -218,9 +218,7 @@ namespace IPSBuildsCopier
             // Проверяем наличие файла у которого будем номер билда
             if (!buildVersionInfoPath.Exists)
             {
-                //TODO Вынести сообщения в лог и уведомления !
-                Console.WriteLine($"Файл версии {buildVersionInfoPath.FullName} не найден.");
-                throw new FileNotFoundException(nameof(buildVersionInfoPath));
+                throw new FileNotFoundException($"Файл с информацией о версии билда не найден: {buildVersionInfoPath}");
             }
 
             // Получаем полную инфу о сборке
@@ -290,13 +288,9 @@ namespace IPSBuildsCopier
                     // Пытаемся создать целевую директорию
                     targetDir.Create();
                 }
-                catch (UnauthorizedAccessException ex)
+                catch (Exception ex)
                 {
-                    throw new UnauthorizedAccessException($"Ошибка ввода-вывода при создании целевой директории.\n{ex.Message}");
-                }
-                catch (IOException ex)
-                {
-                    throw new IOException($"Ошибка ввода-вывода при создании целевой директории.\n{ex.Message}");
+                    throw new Exception($"Ошибка ввода-вывода при создании целевой директории.\n{ex.Message}");
                 }
             }
         }
