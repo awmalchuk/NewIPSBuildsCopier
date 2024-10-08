@@ -15,7 +15,7 @@ namespace IPSBuildsCopier
         public static void ShowNotification(string title, string message)
         {
             // Получаем путь к иконке, которая будет отображаться в уведомлении
-            string iconPath = Path.Combine(Directory.GetCurrentDirectory(), "icon.png");
+            string iconPath = Path.Combine(Directory.GetCurrentDirectory(), "copy.png");
 
             // Создаем и настраиваем уведомление
             new ToastContentBuilder()
