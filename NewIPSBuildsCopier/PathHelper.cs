@@ -30,7 +30,8 @@
         /// <summary>
         /// Возвращает объект FileInfo для файла настроек.
         /// </summary>
-        /// <returns>Объект FileInfo для файла settings.xml.</returns>
+        /// <param name="SettingsFileName"></param>
+        /// <returns>Объект FileInfo для файла settings.xml</returns>
         public static FileInfo GetSettingsFile(string SettingsFileName)
         {
             DirectoryInfo exeDir = GetExecutableDirectory();
