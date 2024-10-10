@@ -7,8 +7,10 @@ namespace IPSBuildsCopier
     /// </summary>
     public static class SettingsLoader
     {
-        /// Путь к файлу настроек.
-        private static readonly string settingsFilePath = "settings.xml";
+        // Путь к файлу настроек.
+        private static readonly string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        private static readonly string exeDir = Path.GetDirectoryName(exePath) ?? throw new InvalidOperationException("Не удалось определить директорию исполняемого файла.");
+        private static readonly string settingsFilePath = Path.Combine(exeDir, "settings.xml");
 
         /// <summary>
         /// Загружает настройки из XML-файла.

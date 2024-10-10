@@ -8,15 +8,8 @@ namespace IPSBuildsCopier
     [XmlRoot("Settings", IsNullable = false)]
     public class Settings
     {
-        [XmlIgnore]
-        public DateTime TaskStartTime { get; set; }
-
-        [XmlElement("TaskStartTime", IsNullable = true)]
-        public string TaskStartTimeString // Время ежедневного запуска задачи. Если null - то задача стартует ежечасно
-        {
-            get { return TaskStartTime.ToString("HH:mm:ss"); }
-            set { TaskStartTime = DateTime.Parse(value); }
-        }
+        [XmlElement("TaskStart", IsNullable = false)]
+        public required TaskStart TaskStart { get; set; } // Вложенный элемент TaskStart
 
         [XmlArray("BuildsList")]
         [XmlArrayItem("BuildInfo", IsNullable = false)]
