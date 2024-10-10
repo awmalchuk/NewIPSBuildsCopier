@@ -1,5 +1,4 @@
 ﻿using Microsoft.Win32.TaskScheduler;
-using System.Diagnostics;
 
 namespace IPSBuildsCopier
 {
@@ -47,7 +46,7 @@ namespace IPSBuildsCopier
                 td.Triggers.Add(dailyTrigger);
 
                 // Указываем путь к исполняемому файлу текущего приложения
-                string exePath = Environment.ProcessPath ?? throw new InvalidOperationException("Не удалось определить путь к исполняемому файлу.");
+                string exePath = PathHelper.GetExecutableFile().FullName;
                 td.Actions.Add(new ExecAction(exePath, null, null));
 
                 try
