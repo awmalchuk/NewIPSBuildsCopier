@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.IO;
 
 namespace IPSBuildsCopier
 {
@@ -293,27 +292,6 @@ namespace IPSBuildsCopier
                     throw new Exception($"Ошибка ввода-вывода при создании целевой директории.\n{ex.Message}");
                 }
             }
-        }
-
-        /// <summary>
-        /// Асинхронно получает общее количество элементов (файлов и папок) в указанной директории.
-        /// </summary>
-        /// <param name="directory">Исходная директория для подсчета элементов.</param>
-        /// <returns>Общее количество файлов и папок в директории и всех её поддиректориях.</returns>
-        private async Task<int> GetTotalItemCountAsync(DirectoryInfo directory)
-        {
-            // Начальное количество элементов: количество файлов и папок в текущей директории
-            int count = directory.GetFiles().Length + directory.GetDirectories().Length;
-
-            // Рекурсивно обходим все поддиректории
-            foreach (DirectoryInfo subDir in directory.GetDirectories())
-            {
-                // Асинхронно добавляем количество элементов в поддиректории к общему количеству
-                count += await GetTotalItemCountAsync(subDir);
-            }
-
-            // Возвращаем общее количество элементов
-            return count;
         }
     }
 }
