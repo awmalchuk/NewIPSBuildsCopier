@@ -27,7 +27,6 @@ namespace IPSBuildsCopier
             catch (Exception ex)
             {
                 // Обработка исключений и вывод сообщения об ошибке
-                //Console.WriteLine($"Ошибка: {ex.Message}");
                 NotificationHelper.ShowErrorNotificationAndLog("Ошибка", $"Ошибка: ", ex.Message);
             }
         }

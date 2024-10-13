@@ -32,8 +32,6 @@ namespace IPSBuildsCopier
                 }
                 catch (Exception ex)
                 {
-                   // Console.WriteLine($"Ошибка копирования дистрибутива {buildInfo.BuildName}: {ex.Message}\n");
-                   // Log.Error(ex.Message, $"Ошибка копирования дистрибутива {buildInfo.BuildName}");
                     NotificationHelper.ShowErrorNotificationAndLog("Ошибка копирования", $"Ошибка копирования дистрибутива {buildInfo.BuildName}", ex.Message);
                 }
             }
@@ -69,15 +67,12 @@ namespace IPSBuildsCopier
             // Проверяем актуальность локальной копии билда. Если копия актуальна, то ее не перезаписываем
             if (await IsBuildCopyActualAsync(currentBuildVersion, destinationDir))
             {
-                // Console.WriteLine($"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
-                // Log.Warning($"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
                 NotificationHelper.ShowWarningNotificationAndLog("Копирование завершено", 
                     $"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
                 return;
             }
 
             // Создаём заголовок для операции копирования
-            // Console.WriteLine($"Копирую {buildInfo.BuildName} ({currentBuildVersion})");
             Log.Information($"Копирую {buildInfo.BuildName} ({currentBuildVersion})");
 
             // Получаем суммарное количество файлов в директории дистрибутива и всех поддиректориях на всех уровнях вложенности
@@ -99,8 +94,6 @@ namespace IPSBuildsCopier
                 await CopyDirectoryContentsAsync(sourceDir, destinationDir, pBar);
             }
 
-            // Console.WriteLine("Копирование завершено.\n");
-            // Log.Information("Копирование завершено.\n");
             NotificationHelper.ShowInfoNotificationAndLog("Копирование завершено", 
                 $"Дистрибутив {buildInfo.BuildName} ({currentBuildVersion}) успешно скопирован.\n");
 
@@ -223,19 +216,14 @@ namespace IPSBuildsCopier
                         pBar.Tick($"Копирование файла {file.Name}"); // Обновление прогресса
                     }
                 }
-
-                //await Task.Run(()=> file.CopyTo(destinationPath, true));
             }
             catch (Exception ex)
             {
                 // Логируем ошибку, если что-то пошло не так
-                // Console.WriteLine($"Ошибка при копировании файла {file.Name}: {ex.Message}");
-                // Log.Error(ex.Message, $"Ошибка при копировании файла {file.Name}: {ex.Message}");
                 NotificationHelper.ShowErrorNotificationAndLog("Ошибка копирования",
                     $"Ошибка при копировании файла {file.Name}", ex.Message );
             }
         }
-
 
         /// <summary>
         /// Получает номер сборки из файла с информацией о версии.

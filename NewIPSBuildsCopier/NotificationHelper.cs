@@ -16,7 +16,6 @@ namespace IPSBuildsCopier
         public static void ShowNotification(string title, string message, string iconName)
         {
             // Получаем путь к иконке, которая будет отображаться в уведомлении
-            //string iconPath = Path.Combine(Directory.GetCurrentDirectory(), "copy.png");
             string iconPath = Path.Combine(PathHelper.GetExecutableDirectory().FullName, iconName);
             FileInfo icon = new FileInfo(iconPath);
 
