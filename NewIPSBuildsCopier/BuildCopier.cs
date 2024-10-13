@@ -60,6 +60,12 @@ namespace IPSBuildsCopier
 
             // Получаем номер сборки билда
             var currentBuildVersion = GetBuildNumber(buildInfo.BuildVersionInfoPath);
+            // Если флаг UseFileLastModifiedInfo = true, то используем дату и время последнего изменения
+            if (buildInfo.UseFileLastModifiedInfo)
+            {
+                currentBuildVersion = GetLastModifiedInfo(buildInfo.BuildVersionInfoPath);
+            }
+
             // Задаём путь к папке назначения (\<Дистрибутив>\<Номер билда>)
             var destinationDir = new DirectoryInfo(Path.Combine(targetDir.FullName, buildName, currentBuildVersion));
 

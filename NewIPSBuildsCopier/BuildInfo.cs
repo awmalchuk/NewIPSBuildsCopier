@@ -30,5 +30,8 @@ namespace IPSBuildsCopier
             get { return BuildVersionInfoPath.FullName; }
             set { BuildVersionInfoPath = new FileInfo(value); }
         }
+
+        [XmlElement("UseFileLastModifiedInfo", IsNullable = false)]
+        public required bool UseFileLastModifiedInfo { get; set; }
     }
 }

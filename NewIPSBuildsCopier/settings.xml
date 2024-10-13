@@ -8,19 +8,26 @@
 	</TaskStart>
 	<BuildsList>
 		<BuildInfo>
+			<!--Имя дистрибуитива-->
 			<BuildName>IPSv7</BuildName>
+			<!--Сетевой путь к папке с дистрибутивом-->
 			<NetworkPath>\\xeon1\IPS_Builds\Im.Net.v7\IPS.Installer.Full\</NetworkPath>
+			<!--Сетевой путь к файлу с информацией о номере сборки дистрибутива-->
 			<BuildVersionInfoPath>\\xeon1\IPS_Builds\Im.Net.v7\IPS.Installer.Full\InstServer\Server\Intermech.Interfaces.dll</BuildVersionInfoPath>
+			<!-- false - используем номер сборки, true - используем дату и время последнего изменения файла <BuildVersionInfoPath>-->
+			<UseFileLastModifiedInfo>false</UseFileLastModifiedInfo>
 		</BuildInfo>
 		<BuildInfo>
 			<BuildName>IPSv8</BuildName>
 			<NetworkPath>\\xeon1\IPS_Builds\Im.Net.v8\IPS.Installer.Full\</NetworkPath>
 			<BuildVersionInfoPath>\\xeon1\IPS_Builds\Im.Net.v8\IPS.Installer.Full\InstServer\Server\Intermech.Interfaces.dll</BuildVersionInfoPath>
+			<UseFileLastModifiedInfo>false</UseFileLastModifiedInfo>
 		</BuildInfo>
 		<BuildInfo>
 			<BuildName>IPSv9</BuildName>
 			<NetworkPath>\\xeon1\IPS_Builds\Im.Net.v9\IPS.Installer.Full\</NetworkPath>
 			<BuildVersionInfoPath>\\xeon1\IPS_Builds\Im.Net.v9\IPS.Installer.Full\InstServer\Server\Intermech.Interfaces.dll</BuildVersionInfoPath>
+			<UseFileLastModifiedInfo>false</UseFileLastModifiedInfo>
 		</BuildInfo>
 	</BuildsList>
 	<TargetFolder>d:\IPSBuilds\</TargetFolder>
