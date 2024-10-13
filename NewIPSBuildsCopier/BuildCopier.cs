@@ -33,7 +33,8 @@ namespace IPSBuildsCopier
                 catch (Exception ex)
                 {
                    // Console.WriteLine($"Ошибка копирования дистрибутива {buildInfo.BuildName}: {ex.Message}\n");
-                    Log.Error(ex.Message, $"Ошибка копирования дистрибутива {buildInfo.BuildName}");
+                   // Log.Error(ex.Message, $"Ошибка копирования дистрибутива {buildInfo.BuildName}");
+                    NotificationHelper.ShowErrorNotificationAndLog("Ошибка копирования", $"Ошибка копирования дистрибутива {buildInfo.BuildName}", ex.Message);
                 }
             }
         }
@@ -69,7 +70,9 @@ namespace IPSBuildsCopier
             if (await IsBuildCopyActualAsync(currentBuildVersion, destinationDir))
             {
                 //Console.WriteLine($"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
-                Log.Warning($"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
+                //Log.Warning($"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
+                NotificationHelper.ShowWarningNotificationAndLog("Копирование завершено", 
+                    $"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
                 return;
             }
 
@@ -97,7 +100,9 @@ namespace IPSBuildsCopier
             }
 
             //Console.WriteLine("Копирование завершено.\n");
-            Log.Information("Копирование завершено.\n");
+            //Log.Information("Копирование завершено.\n");
+            NotificationHelper.ShowInfoNotificationAndLog("Копирование завершено", 
+                $"Дистрибутив {buildInfo.BuildName} ({currentBuildVersion}) успешно скопирован.\n");
 
             // В файл version.txt записывае номер сборки  билда
             await File.WriteAllTextAsync(Path.Combine(destinationDir.FullName, "version.txt"), currentBuildVersion);         
@@ -225,7 +230,9 @@ namespace IPSBuildsCopier
             {
                 // Логируем ошибку, если что-то пошло не так
                 //Console.WriteLine($"Ошибка при копировании файла {file.Name}: {ex.Message}");
-                Log.Error(ex.Message, $"Ошибка при копировании файла {file.Name}: {ex.Message}");
+                //Log.Error(ex.Message, $"Ошибка при копировании файла {file.Name}: {ex.Message}");
+                NotificationHelper.ShowErrorNotificationAndLog("Ошибка копирования",
+                    $"Ошибка при копировании файла {file.Name}", ex.Message );
             }
         }
 

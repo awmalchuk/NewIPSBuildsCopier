@@ -36,7 +36,8 @@ namespace IPSBuildsCopier
             var buildCopier = new BuildCopier(settings);
             await buildCopier.CopyBuildsAsync();
             // Console.WriteLine("Копирование завершено.");
-            Log.Information("Всезадачи копирования завершены.");
+            //Log.Information("Всезадачи копирования завершены.");
+            NotificationHelper.ShowInfoNotificationAndLog("Копирование завершено", "Все задачи копирования завершены.");
 
             Console.ReadKey();
         }
