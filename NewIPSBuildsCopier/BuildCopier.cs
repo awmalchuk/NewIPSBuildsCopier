@@ -255,19 +255,6 @@ namespace IPSBuildsCopier
         }
 
         /// <summary>
-        /// Получает время последнего изменения файла
-        /// </summary>
-        /// <param name="buildVersionInfoPath">Путь к файлу</param>
-        /// <returns></returns>
-        private string GetLastModifiedInfo(FileInfo buildVersionInfoPath)
-        {
-            // Получаем дату и время последнего изменения файла
-            DateTime lastModifiedTime = buildVersionInfoPath.LastWriteTime;
-            string formattedDate = lastModifiedTime.ToString("dd.MM.yyyy_HH.mm");
-            return formattedDate;
-        }
-
-        /// <summary>
         /// Проверяет, актуальна ли локальная копия сборки.
         /// </summary>
         /// <param name="currentBuildVersion">Текущая версия сборки.</param>
