@@ -269,7 +269,7 @@ namespace IPSBuildsCopier
         {
             // Получаем дату и время последнего изменения файла
             DateTime lastModifiedTime = buildVersionInfoPath.LastWriteTime;
-            string formattedDate = lastModifiedTime.ToString("dd.MM.yyyy_HH.mm");
+            string formattedDate = lastModifiedTime.ToString("dd.MM.yyyy HH.mm");
             return formattedDate;
         }
 
