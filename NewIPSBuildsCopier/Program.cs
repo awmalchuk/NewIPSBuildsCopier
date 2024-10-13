@@ -1,4 +1,6 @@
-﻿namespace IPSBuildsCopier
+﻿using Serilog;
+
+namespace IPSBuildsCopier
 {
    public class Program
     {
@@ -33,7 +35,8 @@
             var settings = SettingsLoader.LoadSettings();
             var buildCopier = new BuildCopier(settings);
             await buildCopier.CopyBuildsAsync();
-           // Console.WriteLine("Копирование завершено.");
+            // Console.WriteLine("Копирование завершено.");
+            Log.Information("Всезадачи копирования завершены.");
 
             Console.ReadKey();
         }

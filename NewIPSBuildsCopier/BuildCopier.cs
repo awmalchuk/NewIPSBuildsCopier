@@ -69,14 +69,12 @@ namespace IPSBuildsCopier
             if (await IsBuildCopyActualAsync(currentBuildVersion, destinationDir))
             {
                 //Console.WriteLine($"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
-                // Write a warning log
                 Log.Warning($"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
                 return;
             }
 
             // Создаём заголовок для операции копирования
-           // Console.WriteLine($"Копирую {buildInfo.BuildName} ({currentBuildVersion})");
-            // Write an informational log
+            //Console.WriteLine($"Копирую {buildInfo.BuildName} ({currentBuildVersion})");
             Log.Information($"Копирую {buildInfo.BuildName} ({currentBuildVersion})");
 
             // Получаем суммарное количество файлов в директории дистрибутива и всех поддиректориях на всех уровнях вложенности
@@ -209,7 +207,7 @@ namespace IPSBuildsCopier
                 using (var sourceStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 65536, useAsync: true))
                 {
                     // Создаем поток для записи в целевой файл
-                    // Размер буфера по умолчанию 4Кб (4096); 65536
+                    // Размер буфера по умолчанию 4Кб (4096); Максимальный размер буфера при использовании протокола SMB:64 Кб (65536 байт)
                     using (var destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 65536, useAsync: true))
                     {
                         // Устанавливаем длину целевого файла
