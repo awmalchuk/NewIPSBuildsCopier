@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using ShellProgressBar;
 
 namespace IPSBuildsCopier
 {
@@ -26,7 +27,7 @@ namespace IPSBuildsCopier
                 try
                 {
                     // Пробуем копировать папку с дистрибутивом
-                    await CopyBuildDirectoryAsync(buildInfo, _settings.TargetFolder);
+                    await CopyBuildDirectoryWithProgressBarAsync(buildInfo, _settings.TargetFolder);
                 }
                 catch (Exception ex)
                 {
@@ -44,7 +45,7 @@ namespace IPSBuildsCopier
         /// <exception cref="DirectoryNotFoundException"></exception>
         /// <exception cref="UnauthorizedAccessException"></exception>
         /// <exception cref="IOException"></exception>
-        private async Task CopyBuildDirectoryAsync(BuildInfo buildInfo, DirectoryInfo targetDir)
+        private async Task CopyBuildDirectoryWithProgressBarAsync(BuildInfo buildInfo, DirectoryInfo targetDir)
         {
             // Получаем имя дистрибутива
             var buildName = buildInfo.BuildName;
@@ -65,19 +66,37 @@ namespace IPSBuildsCopier
             // Проверяем актуальность локальной копии билда. Если копия актуальна, то ее не перезаписываем
             if (await IsBuildCopyActualAsync(currentBuildVersion, destinationDir))
             {
-                Console.WriteLine($"Копия билда {buildInfo.BuildName} уже актуальна.\n");
+                Console.WriteLine($"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
                 return;
             }
 
-            //TODO Навести тут порядок
-            // Начало блока копирования
-            Console.WriteLine($"Копирую {buildInfo.BuildName}...");
-            // Копируем содержимое директории
-            await CopyDirectoryContentsAsync(sourceDir, destinationDir);
-            // В файл version.txt записывае номер сборки  билда
-            await File.WriteAllTextAsync(Path.Combine(destinationDir.FullName, "version.txt"), currentBuildVersion);
+            // Создаём заголовок для операции копирования
+            var title = $"Копирую {buildInfo.BuildName} ({currentBuildVersion})";
+            Console.WriteLine(title);
+
+            // Получаем суммарное количество файлов в директории дистрибутива и всех поддиректориях на всех уровнях вложенности
+            int fileCount = sourceDir.GetFiles("*", SearchOption.AllDirectories).Length;
+
+            // Задаём опции прогрессбара
+            var options = new ProgressBarOptions
+            {
+                ForegroundColor = ConsoleColor.Yellow,
+                ForegroundColorDone = ConsoleColor.DarkGreen,
+                BackgroundColor = ConsoleColor.DarkGray,
+                BackgroundCharacter = '\u2593'
+            };
+
+            // Создаём экземпляр прогрессбара
+            using (var pBar = new ProgressBar(fileCount, title, options))
+            {
+                // Копируем содержимое директории с отображением прогрессбара 
+                await CopyDirectoryContentsAsync(sourceDir, destinationDir, pBar);
+            }
+
             Console.WriteLine("Копирование завершено.\n");
-            // Конец блока копирования
+
+            // В файл version.txt записывае номер сборки  билда
+            await File.WriteAllTextAsync(Path.Combine(destinationDir.FullName, "version.txt"), currentBuildVersion);         
         }
 
         /// <summary>
@@ -86,7 +105,7 @@ namespace IPSBuildsCopier
         /// <param name="sourceDir">Сетевая папка с дистрибутивом билда</param>
         /// <param name="destinationDir">Локальная папка для хранения копии билда</param>
         /// <returns></returns>
-        private async Task CopyDirectoryContentsAsync(DirectoryInfo sourceDir, DirectoryInfo destinationDir)
+        private async Task CopyDirectoryContentsAsync(DirectoryInfo sourceDir, DirectoryInfo destinationDir, ProgressBar pBar)
         {
             #region Реализация асинхронного копирования (IPS9 - 1м 30 сек)
             //// Создаем целевую директорию, если она не существует
@@ -155,7 +174,7 @@ namespace IPSBuildsCopier
 
             // Копируем файлы параллельно
             await Task.WhenAll(files.Select(file =>
-                CopyFileAsync(file, Path.Combine(destinationDir.FullName, file.Name))));
+                CopyFileAsync(file, Path.Combine(destinationDir.FullName, file.Name), pBar)));
             // Для каждого файла в исходной директории создаем задачу копирования файла в целевую директорию
             // Path.Combine(destinationDir.FullName, file.Name) формирует полный путь к файлу в целевой директории
             // Task.WhenAll запускает все задачи копирования параллельно и ожидает их завершения
@@ -164,7 +183,7 @@ namespace IPSBuildsCopier
             await Task.WhenAll(directories.Select(async subDir =>
             {
                 var newDestinationDir = destinationDir.CreateSubdirectory(subDir.Name); // Создаем поддиректорию в целевой директории
-                await CopyDirectoryContentsAsync(subDir, newDestinationDir); // Рекурсивно копируем содержимое поддиректории
+                await CopyDirectoryContentsAsync(subDir, newDestinationDir, pBar); // Рекурсивно копируем содержимое поддиректории
             }));
             // Для каждой поддиректории в исходной директории создаем задачу копирования содержимого поддиректории в новую поддиректорию целевой директории
             // Task.WhenAll запускает все задачи копирования параллельно и ожидает их завершения
@@ -176,7 +195,7 @@ namespace IPSBuildsCopier
         /// </summary>
         /// <param name="file">Исходный файл.</param>
         /// <param name="destinationPath">Путь к целевому файлу.</param>
-        private async Task CopyFileAsync(FileInfo file, string destinationPath)
+        private async Task CopyFileAsync(FileInfo file, string destinationPath, ProgressBar pBar)
         {
             try
             {
@@ -192,6 +211,7 @@ namespace IPSBuildsCopier
 
                         // Асинхронно копируем данные из исходного потока в целевой
                         await sourceStream.CopyToAsync(destinationStream);
+                        pBar.Tick($"Копирование файла {file.Name}"); // Обновление прогресса
                     }
                 }
 
