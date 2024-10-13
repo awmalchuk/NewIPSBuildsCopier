@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Serilog;
 using ShellProgressBar;
 
 namespace IPSBuildsCopier
@@ -31,7 +32,8 @@ namespace IPSBuildsCopier
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Ошибка копирования дистрибутива {buildInfo.BuildName}: {ex.Message}\n");
+                   // Console.WriteLine($"Ошибка копирования дистрибутива {buildInfo.BuildName}: {ex.Message}\n");
+                    Log.Error(ex.Message, $"Ошибка копирования дистрибутива {buildInfo.BuildName}");
                 }
             }
         }
@@ -66,13 +68,16 @@ namespace IPSBuildsCopier
             // Проверяем актуальность локальной копии билда. Если копия актуальна, то ее не перезаписываем
             if (await IsBuildCopyActualAsync(currentBuildVersion, destinationDir))
             {
-                Console.WriteLine($"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
+                //Console.WriteLine($"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
+                // Write a warning log
+                Log.Warning($"Копия билда {buildInfo.BuildName} ({currentBuildVersion}) уже актуальна.\n");
                 return;
             }
 
             // Создаём заголовок для операции копирования
-            var title = $"Копирую {buildInfo.BuildName} ({currentBuildVersion})";
-            Console.WriteLine(title);
+           // Console.WriteLine($"Копирую {buildInfo.BuildName} ({currentBuildVersion})");
+            // Write an informational log
+            Log.Information($"Копирую {buildInfo.BuildName} ({currentBuildVersion})");
 
             // Получаем суммарное количество файлов в директории дистрибутива и всех поддиректориях на всех уровнях вложенности
             int fileCount = sourceDir.GetFiles("*", SearchOption.AllDirectories).Length;
@@ -87,13 +92,14 @@ namespace IPSBuildsCopier
             };
 
             // Создаём экземпляр прогрессбара
-            using (var pBar = new ProgressBar(fileCount, title, options))
+            using (var pBar = new ProgressBar(fileCount, "Копирование", options))
             {
                 // Копируем содержимое директории с отображением прогрессбара 
                 await CopyDirectoryContentsAsync(sourceDir, destinationDir, pBar);
             }
 
-            Console.WriteLine("Копирование завершено.\n");
+            //Console.WriteLine("Копирование завершено.\n");
+            Log.Information("Копирование завершено.\n");
 
             // В файл version.txt записывае номер сборки  билда
             await File.WriteAllTextAsync(Path.Combine(destinationDir.FullName, "version.txt"), currentBuildVersion);         
@@ -220,7 +226,8 @@ namespace IPSBuildsCopier
             catch (Exception ex)
             {
                 // Логируем ошибку, если что-то пошло не так
-                Console.WriteLine($"Ошибка при копировании файла {file.Name}: {ex.Message}");
+                //Console.WriteLine($"Ошибка при копировании файла {file.Name}: {ex.Message}");
+                Log.Error(ex.Message, $"Ошибка при копировании файла {file.Name}: {ex.Message}");
             }
         }
 

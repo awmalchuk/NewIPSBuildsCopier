@@ -28,6 +28,8 @@
             //Console.WriteLine($"Удаляем задачу из планировщика задач");
             //TaskSchedulerHelper.RemoveTask();
 
+            SerilogHelper.InitializeLogger();
+
             var settings = SettingsLoader.LoadSettings();
             var buildCopier = new BuildCopier(settings);
             await buildCopier.CopyBuildsAsync();

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32.TaskScheduler;
+using Serilog;
 
 namespace IPSBuildsCopier
 {
@@ -22,7 +23,8 @@ namespace IPSBuildsCopier
                 // Проверяем, существует ли уже задача с именем "IPS builds copy task"
                 if (ts.FindTask(TaskName) != null)
                 {
-                    Console.WriteLine("Задача уже присутствует в планировщике задач Windows.");
+                    //Console.WriteLine("Задача {TaskName} уже присутствует в планировщике задач Windows.");
+                    Log.Warning($"Задача {TaskName} уже присутствует в планировщике задач Windows.\n");
                     return;
                 }
 
@@ -53,13 +55,15 @@ namespace IPSBuildsCopier
                 {
                     // Регистрируем задачу в планировщике задач Windows
                     ts.RootFolder.RegisterTaskDefinition(TaskName, td);
-                    Console.WriteLine(exePath);
-                    Console.WriteLine("Задача добавлена в планировщик задач Windows.");
+                    //Console.WriteLine(exePath);
+                    //Console.WriteLine("Задача добавлена в планировщик задач Windows.");
+                    Log.Information($"Задача {TaskName} добавлена в планировщик задач Windows.\n");
                 }
                 catch (Exception ex)
                 {
                     // Обработка исключений при добавлении задачи
-                    Console.WriteLine($"Ошибка при добавлении задачи: {ex.Message}");
+                    //Console.WriteLine($"Ошибка при добавлении задачи {TaskName}: {ex.Message}");
+                    Log.Error(ex.Message, $"Ошибка при добавлении задачи {TaskName}\n");
                     throw;
                 }
             }
@@ -75,7 +79,8 @@ namespace IPSBuildsCopier
                 // Проверяем, существует ли задача с именем "Builds copy task"
                 if (ts.FindTask(TaskName) == null)
                 {
-                    Console.WriteLine("Задачи нет в планировщике.");
+                    //Console.WriteLine($"Задачи {TaskName} нет планировщике задач Windows.\n");
+                    Log.Warning($"Задачи {TaskName} нет планировщике задач Windows.\n");
                     return;
                 }
 
@@ -83,12 +88,14 @@ namespace IPSBuildsCopier
                 {
                     // Удаляем задачу из планировщика задач Windows
                     ts.RootFolder.DeleteTask(TaskName);
-                    Console.WriteLine("Задача успешно удалена из планировщика задач Windows.");
+                    //Console.WriteLine("Задача успешно удалена из планировщика задач Windows.");
+                    Log.Information($"Задача {TaskName} успешно удалена из планировщика задач Windows.\n");
                 }
                 catch (Exception ex)
                 {
                     // Обработка исключений при удалении задачи
-                    Console.WriteLine($"Ошибка при удалении задачи: {ex.Message}");
+                    //Console.WriteLine($"Ошибка при удалении задачи: {ex.Message}");
+                    Log.Error(ex.Message, $"Ошибка при удалении задачи {TaskName}\n");
                     throw;
                 }
             }
