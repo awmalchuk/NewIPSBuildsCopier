@@ -6,40 +6,73 @@ namespace IPSBuildsCopier
     {
         static async Task Main(string[] args)
         {
-            //// string xmlFilePath = "settings.xml";
-
-            // // Десерилизация XML-файла
-            //Settings settings = SettingsLoader.LoadSettings();
-
-            //// Проверка десерилизованных данных
-            //Console.WriteLine($"Task Start Time: {settings.TaskStart.TaskStartTime}\n");
-            //Console.WriteLine($"Task Start Hourly: {settings.TaskStart.IsHourly}\n");
-            //Console.WriteLine($"Target Folder: {settings.TargetFolder} \n");
-            //foreach (var build in settings.BuildsList)
-            //{
-            //    Console.WriteLine($"Build Name: {build.BuildName}");
-            //    Console.WriteLine($"Network Path: {build.NetworkPath}");
-            //    Console.WriteLine($"Build Version Info Path: {build.BuildVersionInfoPath}\n");
-            //}
-
-            //Console.WriteLine($"Добавляем задачу в планировщик задач");
-            //TaskSchedulerHelper.AddTask(settings);
-
-            //Console.ReadKey();
-
-            //Console.WriteLine($"Удаляем задачу из планировщика задач");
-            //TaskSchedulerHelper.RemoveTask();
-
+            // Инициализируем Serilog
             SerilogHelper.InitializeLogger();
 
-            var settings = SettingsLoader.LoadSettings();
+            try
+            {
+                // Загрузка настроек из файла settings.xml
+                Settings settings = SettingsLoader.LoadSettings();
+
+                // Обработка аргументов командной строки
+                await HandleCommandLineArgsAsync(args, settings);
+            }
+            catch (Exception ex)
+            {
+                // Обработка исключений и вывод сообщения об ошибке
+                //Console.WriteLine($"Ошибка: {ex.Message}");
+                NotificationHelper.ShowErrorNotificationAndLog("Ошибка", $"Ошибка: ", ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Обрабатывает аргументы командной строки и выполняет соответствующие действия.
+        /// </summary>
+        /// <param name="args">Аргументы командной строки.</param>
+        /// <param name="settings">Настройки приложения.</param>
+        private static async Task HandleCommandLineArgsAsync(string[] args, Settings settings)
+        {
+            if (args.Length == 0)
+            {
+                // Если аргументов нет, запускаем основное приложение
+                await RunCopierAsync(settings);
+                return;
+            }
+
+            switch (args[0].ToLower())
+            {
+                case "addtask":
+                    // Если аргумент "addtask", добавляем задачу в планировщик
+                    TaskSchedulerHelper.AddTask(settings);
+                    break;
+                case "removetask":
+                    // Если аргумент "removetask", удаляем задачу из планировщика
+                    TaskSchedulerHelper.RemoveTask();
+                    break;
+                default:
+                    throw new ArgumentException("Неизвестный аргумент командной строки.");
+            }
+        }
+
+        /// <summary>
+        /// Запускает основное приложение.
+        /// </summary>
+        /// <param name="settings">Настройки приложения.</param>
+        private static async Task RunCopierAsync(Settings settings)
+        {
+            // Создаём экземпляр класса копировальщика дистрибутивов
             var buildCopier = new BuildCopier(settings);
+
+            // Запускем задачу копирования дистрибутивов асинхронно
             await buildCopier.CopyBuildsAsync();
-            // Console.WriteLine("Копирование завершено.");
-            // Log.Information("Всезадачи копирования завершены.");
+
+            // Выводим уведомление и пишем в лог
             NotificationHelper.ShowInfoNotificationAndLog("Копирование завершено", "Все задачи копирования завершены.");
 
-            Console.ReadKey();
+            // Финализирую работу Serilog
+            Log.CloseAndFlush();
+
+            Thread.Sleep(3000);
         }
     }
 }
