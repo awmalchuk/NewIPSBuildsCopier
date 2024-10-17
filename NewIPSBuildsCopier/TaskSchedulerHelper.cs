@@ -59,7 +59,7 @@ namespace IPSBuildsCopier
                 catch (Exception ex)
                 {
                     // Обработка исключений при добавлении задачи
-                    NotificationHelper.ShowErrorNotificationAndLog(title, $"Ошибка при добавлении задачи {TaskName}\n", ex.Message);
+                    NotificationHelper.ShowErrorNotificationAndLog(title, $"Ошибка при добавлении задачи {TaskName}\n", ex);
                     throw;
                 }
             }
@@ -88,7 +88,7 @@ namespace IPSBuildsCopier
                 catch (Exception ex)
                 {
                     // Обработка исключений при удалении задачи
-                    NotificationHelper.ShowErrorNotificationAndLog(title, $"Ошибка при удалении задачи {TaskName}\n", ex.Message);
+                    NotificationHelper.ShowErrorNotificationAndLog(title, $"Ошибка при удалении задачи {TaskName}\n", ex);
                     throw;
                 }
             }

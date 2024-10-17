@@ -32,7 +32,7 @@ namespace IPSBuildsCopier
                 }
                 catch (Exception ex)
                 {
-                    NotificationHelper.ShowErrorNotificationAndLog("Ошибка копирования", $"Ошибка копирования дистрибутива {buildInfo.BuildName}", ex.Message);
+                    NotificationHelper.ShowErrorNotificationAndLog("Ошибка копирования", $"Ошибка копирования дистрибутива {buildInfo.BuildName}", ex);
                 }
             }
         }
@@ -221,7 +221,7 @@ namespace IPSBuildsCopier
             {
                 // Логируем ошибку, если что-то пошло не так
                 NotificationHelper.ShowErrorNotificationAndLog("Ошибка копирования",
-                    $"Ошибка при копировании файла {file.Name}", ex.Message );
+                    $"Ошибка при копировании файла {file.Name}", ex );
             }
         }
 

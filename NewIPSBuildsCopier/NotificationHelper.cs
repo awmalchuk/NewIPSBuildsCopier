@@ -42,10 +42,10 @@ namespace IPSBuildsCopier
         }
 
         // Уведомление об ошибке
-        public static void ShowErrorNotificationAndLog(string title, string message, string exMessage)
+        public static void ShowErrorNotificationAndLog(string title, string message, Exception ex)
         {
             ShowNotification(title, message, "error.png");
-            Log.Warning(exMessage, message);
+            Log.Warning(ex, message);
         }
     }
 }
